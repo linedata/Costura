@@ -250,10 +250,15 @@ static class Common
         foreach (var lib in libs)
         {
             name = ResourceNameToPath(lib);
+            WriteFile(Path.Combine(tempBasePath, name), lib, checksums);
 
-            var assemblyTempFilePath = Path.Combine(tempBasePath, name);
-
-            WriteFile(assemblyTempFilePath, lib, checksums);
+            var bittyness = IntPtr.Size == 8 ? "64" : "32";
+            if (name.StartsWith(bittyness + "\\"))
+            {
+                var namePrime = name.Substring(3);
+                var assemblyTempFilePath = Path.Combine(tempBasePath, namePrime);
+                WriteFile(assemblyTempFilePath, lib, checksums);
+            }   
         }
 
         SetDllDirectory(tempBasePath);
