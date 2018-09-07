@@ -224,6 +224,25 @@ static class Common
         }
     }
 
+    static void WriteFile(string assemblyTempFilePath, string lib, Dictionary<string, string> checksums)
+    {
+        if (File.Exists(assemblyTempFilePath))
+        {
+            var checksum = CalculateChecksum(assemblyTempFilePath);
+            if (checksum != checksums[lib])
+                File.Delete(assemblyTempFilePath);
+        }
+
+        if (!File.Exists(assemblyTempFilePath))
+        {
+            using (var copyStream = LoadStream(lib))
+            using (var assemblyTempFile = File.OpenWrite(assemblyTempFilePath))
+            {
+                CopyTo(copyStream, assemblyTempFile);
+            }
+        }
+    }
+
     static void InternalPreloadUnmanagedLibraries(string tempBasePath, IEnumerable<string> libs, Dictionary<string, string> checksums)
     {
         string name;
@@ -234,21 +253,7 @@ static class Common
 
             var assemblyTempFilePath = Path.Combine(tempBasePath, name);
 
-            if (File.Exists(assemblyTempFilePath))
-            {
-                var checksum = CalculateChecksum(assemblyTempFilePath);
-                if (checksum != checksums[lib])
-                    File.Delete(assemblyTempFilePath);
-            }
-
-            if (!File.Exists(assemblyTempFilePath))
-            {
-                using (var copyStream = LoadStream(lib))
-                using (var assemblyTempFile = File.OpenWrite(assemblyTempFilePath))
-                {
-                    CopyTo(copyStream, assemblyTempFile);
-                }
-            }
+            WriteFile(assemblyTempFilePath, lib, checksums);
         }
 
         SetDllDirectory(tempBasePath);
